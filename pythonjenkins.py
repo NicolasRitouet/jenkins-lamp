@@ -6,6 +6,13 @@ try:
 	import json
 	
 
+	print "#########################################################"
+	print "#                                                       #"
+	print "#      jenkins build status monitor with python         #"
+	print "#      (c)2013 fv                                       #"
+	print "#                                                       #"
+	print "#########################################################"
+
 	# to use Raspberry Pi board pin numbers
 	GPIO.setmode(GPIO.BOARD)
 	GPIO.cleanup()

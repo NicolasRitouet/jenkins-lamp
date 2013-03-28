@@ -5,6 +5,14 @@ YELLOW_LED=5
 GREEN_LED=11
 ON=1
 OFF=0
+echo "#########################################################"
+echo "#                                                       #"
+echo "#      jenkins build status monitor with bash           #"
+echo "#      (c)2013 fv                                       #"
+echo "#                                                       #"
+echo "#########################################################"
+
+
 echo Initializing...
 #initialize the array of jobnames
 wget -qO- -O tmpJenkinsJoblistXML1.xml http://jenkins.zanox.com/view/API/api/xml
@@ -38,9 +46,7 @@ rm tmpJenkinsJoblistXML2.xml
 
 init ()
 {
-  echo Initializing...
   for i in $RED_LED $YELLOW_LED $GREEN_LED ; do gpio mode $i out ; done
-  echo Done!
 }
 reset ()
 {

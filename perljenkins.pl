@@ -3,23 +3,28 @@ use warnings;
 
 use LWP::UserAgent;
 use XML::LibXML;
+use Device::BCM2835;
 
-my @GPIOPins = [0,5,11]; 
-#my @GPIOPins = [17,24,7]; 
-#my @GPIOPins = [11,18,26]; 
-my $OFF = "1";
-my $ON = "0";
+print "#########################################################\n";
+print "#                                                       #\n";
+print "#      jenkins build status monitor with perl           #\n";
+print "#      (c)2013 fv                                       #\n";
+print "#                                                       #\n";
+print "#########################################################\n";
 
-#initPins($GPIOPins);
+Device::BCM2835::init() || die "Could not init library BCM2835";
 
+my $ON = 1;
+my $OFF = 0;
 
+initPins();
 
-my $url = 'https://jenkins.zanox.com/view/API/api/xml?tree=jobs[name,color]';
+my $jenkinsUrl= 'https://jenkins.zanox.com/view/API/api/xml?tree=jobs[name,color]';
 my $ua = LWP::UserAgent->new;
 $ua->timeout(10);
 $ua->env_proxy;
 # ask jenkins
-my $response = $ua->get($url);
+my $response = $ua->get($jenkinsUrl);
 # got a response from jenkins?
 if ($response->is_success) {
         my $content = $response->decoded_content;
@@ -28,48 +33,54 @@ if ($response->is_success) {
         for my $job ($xmldoc->findnodes('/listView/job')) {
                 my $buildStatus = $job->findvalue('color/text()');
                 my $jobName = $job->findvalue('name/text()');
-                if($buildStatus eq "red")
+$jbName="business-sonar";                
+if($buildStatus eq "red")
                 {
-			print "JOB: $jobName  ------------------     STATUS: FAILED\n";
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_11, $ON);
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_18, $OFF);
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_26, $OFF);
+
+
+			print "JOB: $jobName\n";
+			print "STATUS: FAILED\n\n";
+			
                 }
                 elsif($buildStatus eq "blue")
                 {
-                     print "JOB: $jobName  ------------------     STATUS: YEAH\n";
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_11, $OFF);
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_18, $OFF);
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_26, $ON);
+
+                     print "JOB: $jobName\n";
+			print "STATUS: SUCCESS\n\n";
+
                 }
                 else
                 {
-                     print "JOB: $jobName  ------------------     STATUS: HUH?\n";
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_11, $OFF);
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_18, $ON);
+			Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_26, $OFF);
+
+
+                     print "JOB: $jobName\n";
+			print "STATUS: ???\n\n";
                 }
+		  #sleep(1);
         }
 }
 
-#resetPins($GPIOPins);
+resetPins();
 
-sub setPin {
-	my $pin = shift;
-	my $value = shift;
-	open my $pinvalue, ">", "/sys/class/gpio/gpio$pin/value";
-       print $pinvalue "$value";
-       close $pinvalue;
-}
 sub initPins {
-     my $pins = shift;
-     foreach my $pin (@$pins) {
-        open my $export, ">", "/sys/class/gpio/export";
-        say $export "$pin";
-        close $export;
-        open my $pindirection, ">", "/sys/class/gpio/gpio$pin/direction";
-        print $pindirection 'out';
-        close $pindirection;
-    }
+	#my @GPIOPins = [11,18,26]; 
+	Device::BCM2835::gpio_fsel(&Device::BCM2835::RPI_GPIO_P1_11,&Device::BCM2835::BCM2835_GPIO_FSEL_OUTP);
+	Device::BCM2835::gpio_fsel(&Device::BCM2835::RPI_GPIO_P1_18,&Device::BCM2835::BCM2835_GPIO_FSEL_OUTP);
+	Device::BCM2835::gpio_fsel(&Device::BCM2835::RPI_GPIO_P1_26,&Device::BCM2835::BCM2835_GPIO_FSEL_OUTP);
+	resetPins();
 }
  
 sub resetPins {
-    my $pins = shift;
- 
-    foreach my $pin (@$pins) {
-        open my $unexport, ">", "/sys/class/gpio/unexport";
-        say $unexport "$pin";
-        close $unexport;
-    }
+	Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_11, $OFF);
+	Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_18, $OFF);
+	Device::BCM2835::gpio_write(&Device::BCM2835::RPI_GPIO_P1_26, $OFF);
 }
