@@ -5,7 +5,7 @@ YELLOW_LED=5
 GREEN_LED=11
 ON=1
 OFF=0
-
+echo Initializing...
 #initialize the array of jobnames
 wget -qO- -O tmpJenkinsJoblistXML1.xml http://jenkins.zanox.com/view/API/api/xml
 # replace </name> with </name>\n
@@ -26,6 +26,7 @@ while (getline < "tmpJenkinsJoblistXML2.xml")
 }'
 jobNames=tmpJenkinsJoblistXML.xml
 index=0
+echo Done!
 while read line ; do
 JENKINS_JOBS[$index]="$line"
 index=$(($index+1))
@@ -75,20 +76,22 @@ getBuildStatus()
   tmpEndPos=`expr $tmpEndPos - 1`
   # extract the color (red, blue etc.)
   buildStatus=`expr substr $tmpBuildStatus 1 $tmpEndPos`
-  echo $buildStatus
   if [[ "$buildStatus" == "red" ]]; then
     reset     
+    echo "JOB: " $jobName "- STATUS: FAILURE" 
     setLed $RED_LED $ON
     
   fi
   if [[ "$buildStatus" == "grey" ]]; then
     reset 
+    echo "JOB: " $jobName "- STATUS: INSTABLE"
     setLed $YELLOW_LED $ON
     
   fi
 
   if [[ "$buildStatus" == "blue" ]]; then
     reset 
+    echo "JOB: " $jobName "- STATUS: SUCCESS"
     setLed $GREEN_LED $ON
     
   fi

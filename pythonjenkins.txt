@@ -1,0 +1,1 @@
+- needs https://pypi.python.org/pypi/RPi.GPIO
